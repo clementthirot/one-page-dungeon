@@ -4,7 +4,9 @@ Adaptation en HTML/CSS/JS vanilla du jeu solo *One Card Dungeon* de Barny Skinne
 
 ## Jouer
 
-Ouvrez `index.html` dans un navigateur (aucune installation). Pour le partager avec vos amis, hébergez le dossier sur n'importe quel hébergeur statique (GitHub Pages, Netlify…).
+**En ligne : https://clementthirot.github.io/one-page-dungeon/** (ordinateur ou téléphone).
+
+En local : ouvrez `index.html` dans un navigateur, sans installation.
 
 - **Espace / Entrée** : action principale (lancer, valider, fin du tour)
 - **Z** : annuler la dernière action du tour
