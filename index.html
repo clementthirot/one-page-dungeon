@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#120d18">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="One Card Dungeon">
+  <title>One Card Dungeon</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <div class="logo">One Card <span>Dungeon</span></div>
+      <div class="hud">
+        <div class="chip">Niveau <b id="hud-level">1</b><small>/12</small></div>
+        <div class="chip">Tour <b id="hud-turn">1</b></div>
+        <button class="icon-btn" id="btn-oracle" title="Oracle : prévision des dégâts">🔮</button>
+        <button class="icon-btn" id="btn-sound" title="Son et vibrations">🔊</button>
+        <button class="icon-btn" id="btn-banners" title="Bandeaux de phase">🎬</button>
+        <button class="icon-btn" id="btn-help" title="Règles">📜</button>
+      </div>
+      <!-- HUD mobile : niveau (ouvre la Progression), menu. Vie et stats sont dans la barre des stats. -->
+      <div class="hud-m">
+        <button class="hud-btn" id="btn-progress" aria-label="Progression"><span class="chip" id="hud-lvl">1/12</span></button>
+        <button class="icon-btn hud-btn" id="btn-menu" aria-label="Menu">⋯</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="board-col">
+        <div class="track" id="track"></div>
+        <div class="monster-card" id="monster-card"></div>
+        <div class="board-frame" id="board-frame">
+          <div class="board" id="board">
+            <div class="tiles" id="tiles"></div>
+            <div class="entities" id="entities"></div>
+            <div class="fx" id="fx"></div>
+          </div>
+        </div>
+        <div class="oracle" id="oracle" aria-live="polite"></div>
+        <div class="toast" id="toast"></div>
+      </section>
+
+      <aside class="panel">
+        <!-- Barre des stats unifiée : vie + réserve des jetons, puis 4 tuiles (seule interface d'attribution) -->
+        <div class="hero-card" id="tray">
+          <div class="statbar" id="statbar"></div>
+        </div>
+
+        <div class="actions">
+          <button class="btn" id="btn-undo" title="Annuler (Z)" aria-label="Annuler">↶<span class="lbl"> Annuler</span></button>
+          <button class="btn primary" id="btn-main" title="Fin du tour (Espace)">⏭ Fin du tour</button>
+          <p class="hint" id="hint"></p>
+        </div>
+
+        <div class="log" id="log" role="button" tabindex="0" aria-expanded="false" title="Déplier le journal"></div>
+      </aside>
+    </main>
+  </div>
+
+  <!-- Bandeau de phase : une bande qui traverse l'écran (un tap ou Espace le passe) -->
+  <div class="banner" id="banner" aria-live="polite">
+    <div class="bn-band"><span class="bn-ico"></span><div class="bn-text"><h2></h2><p></p></div><div class="bn-extra"></div></div>
+  </div>
+  <div class="vignette" id="vignette"></div>
+  <div id="drag-layer"></div>
+
+  <!-- Feuille du bas (mobile) : Menu ou Progression -->
+  <div class="sheet-back" id="sheet" inert>
+    <div class="sheet" role="dialog" aria-modal="true" aria-label="Menu">
+      <div class="sheet-head" id="sheet-grip"></div>
+      <button class="close" id="btn-close-sheet" aria-label="Fermer">✕</button>
+      <div class="sheet-body" id="sheet-body"></div>
+    </div>
+  </div>
+
+  <!-- Écran d'accueil -->
+  <div class="overlay show" id="ov-start">
+    <div class="modal start">
+      <div class="start-icon">🗝️</div>
+      <h1 class="title">One Card <span>Dungeon</span></h1>
+      <p class="tagline">12 niveaux. 3 dés. Un seul Sceptre de M'Guf-yn.</p>
+      <label class="field">
+        <span>Nom de l'aventurier·e</span>
+        <input id="in-name" maxlength="16" placeholder="Votre nom" autocomplete="off">
+      </label>
+      <div class="field">
+        <span>Avatar</span>
+        <div class="avatars" id="avatars"></div>
+        <p class="av-style" id="av-style"></p>
+      </div>
+      <div class="field">
+        <span>Mode</span>
+        <div class="modes">
+          <button class="mode sel" data-mode="free">🎲 Partie libre<small>dés aléatoires</small></button>
+          <button class="mode" data-mode="daily">📅 Défi du jour<small>mêmes dés pour tous vos amis</small></button>
+        </div>
+      </div>
+      <button class="btn primary big" id="btn-start">Entrer dans le donjon</button>
+      <button class="btn ghost" id="btn-rules">📜 Lire les règles</button>
+      <div class="hof">
+        <h3>🏆 Panthéon</h3>
+        <ol id="hof"></ol>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fin de niveau -->
+  <div class="overlay" id="ov-level" inert>
+    <div class="modal">
+      <h2 class="modal-title">✨ Repos au coin du feu</h2>
+      <p class="sub">Améliorez une compétence <b>ou</b> soignez-vous entièrement.</p>
+      <div class="rewards" id="rewards"></div>
+      <div class="next" id="next-preview"></div>
+    </div>
+  </div>
+
+  <!-- Fin de partie -->
+  <div class="overlay" id="ov-end" inert>
+    <div class="modal end" id="end-content"></div>
+  </div>
+
+  <!-- Règles -->
+  <div class="overlay" id="ov-help" inert>
+    <div class="modal rules">
+      <button class="close" id="btn-close-help" aria-label="Fermer">✕</button>
+      <h2 class="modal-title">📜 Règles</h2>
+      <p>Traversez <b>12 niveaux</b> de donjon et tuez tous les monstres de chacun pour atteindre le Sceptre de M'Guf-yn. Vous commencez avec <b>6 ❤</b>, Vitesse/Attaque/Défense à 1 et Portée à 2.</p>
+      <h3>1 · 🎲 Énergie</h3>
+      <p>Au début du tour, 3 dés sont lancés automatiquement : ils arrivent dans la <b>réserve</b> sous forme de jetons dorés <span class="tok tok-mini"><b>4</b></span>. Attribuez-en un à chaque compétence : il s'ajoute à sa base et prend sa forme et sa couleur, <span class="tok tok-mini tok-spd"><b>5</b></span> <b class="kc-spd">Vitesse</b>, <span class="tok tok-mini tok-atk"><b>3</b></span> <b class="kc-atk">Attaque</b>, <span class="tok tok-mini tok-def"><b>6</b></span> <b class="kc-def">Défense</b>.</p>
+      <p>La réserve et les compétences sont dans la même barre, qui ne change jamais de forme : chaque tuile de compétence est l'emplacement de son jeton.</p>
+      <ul>
+        <li><b>En 3 taps</b> : touchez un jeton de la réserve, il se pose sur la compétence qui pulse (la première vide : Vitesse, puis Attaque, puis Défense). Touchez une compétence vide pour la choisir d'abord.</li>
+        <li><b>En glissant</b> : glissez un jeton sur une compétence ; sur une compétence déjà remplie, les deux jetons s'échangent.</li>
+        <li>Touchez une compétence remplie pour renvoyer son jeton dans la réserve.</li>
+      </ul>
+      <p>Aucun jeton ne se pose tout seul et il n'y a rien à valider : dès que les 3 jetons sont posés, vous pouvez agir. Votre <b>première action verrouille les jetons</b> 🔒 ; annulez (↶) toutes vos actions pour les réattribuer. La <b class="kc-rng">Portée</b> ne reçoit jamais de jeton.</p>
+      <h3>2 · ⚔️ Aventure</h3>
+      <p>Dépensez vos points dans l'ordre que vous voulez, puis cliquez <b>Fin du tour</b> (Espace) :</p>
+      <ul>
+        <li><b>Déplacement</b> : 2 points de Vitesse par case orthogonale, 3 en diagonale. Impossible d'entrer sur un mur ou un monstre.</li>
+        <li><b>Attaque</b> : si un monstre est à portée et en ligne de vue, dépensez autant de points d'Attaque que sa Défense pour lui retirer 1 PV.</li>
+      </ul>
+      <h3>3 · 👣 Mouvement des monstres</h3>
+      <p>Du plus proche au plus lointain, chaque monstre cherche à se placer à sa portée <b>maximale</b> avec ligne de vue. Être à portée prime sur être à portée maximale. Ils traversent les autres monstres mais pas les murs ni vous.</p>
+      <h3>4 · 💥 Attaque des monstres</h3>
+      <p>Additionnez l'Attaque des monstres à portée et en vue. Dégâts = Attaque totale ÷ votre Défense du tour, arrondi à l'inférieur. Exemple : 12 contre 4 → 3 dégâts.</p>
+      <h3>📏 Portée & ligne de vue</h3>
+      <p>La portée se compte comme le mouvement : orthogonal adjacent = 2, diagonal adjacent = 3. Il y a ligne de vue si un trait peut relier un coin de votre case à un coin de la case cible sans traverser un mur ni un autre monstre.</p>
+      <h3>🏕️ Fin de niveau</h3>
+      <p>Après chaque niveau, choisissez <b>soit</b> +1 à une compétence (Vitesse, Attaque, Défense, Portée), <b>soit</b> un soin complet à 6 ❤.</p>
+      <h3>🔮 Oracle</h3>
+      <p>Une aide propre à cette version : elle simule la riposte des monstres et indique sur chaque case les dégâts que vous subirez si vous finissez votre tour dessus. Désactivez-la avec 🔮 pour la difficulté d'origine.</p>
+      <p class="credit">D'après <i>One Card Dungeon</i> de Barny Skinner (2020).</p>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/fx.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
